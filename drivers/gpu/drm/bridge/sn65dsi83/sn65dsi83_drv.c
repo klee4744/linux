@@ -18,6 +18,10 @@
 #include <drm/drm_mipi_dsi.h>
 #include <drm/drm_connector.h>
 #include <drm/drm_crtc_helper.h>
+#include <drm/drm_bridge.h>
+#include <drm/drm_modes.h>
+#include <drm/drm_print.h>
+#include <drm/drm_atomic_state_helper.h>
 #include <video/mipi_display.h>
 #include <video/of_display_timing.h>
 #include <video/of_videomode.h>
