@@ -1,0 +1,106 @@
+/*
+ * Device Tree overlay for TI SN65DSI83 MIPI DSI to LVDS bridge driver
+ *
+ */
+ 
+/dts-v1/;
+/plugin/;
+
+/{
+	compatible = "brcm,bcm2835";
+
+	fragment@0 {
+		target = <&gpio>;
+		__overlay__ {
+			sn65dsi83_pins: sn65dsi83_pins {
+				brcm,pins = <17 27>;
+				brcm,function = <1 0>; /* out in */
+				brcm,pull = <0 1>; /* none pulldown */
+			};
+		};
+	};
+
+	fragment@1 {
+		target = <&i2c_arm>;
+		__overlay__ {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "okay";
+
+			sn65dsi83: sn65dsi83@2c {
+				compatible = "ti,sn65dsi83";
+				reg = <0x2c>;
+				ti,dsi-lanes = <4>;
+				ti,lvds-format = <1>;
+				ti,lvds-bpp = <24>;
+				ti,width-mm = <154>;
+				ti,height-mm = <86>;
+				enable-gpios = <&gpio 17 GPIO_ACTIVE_HIGH>;
+				interrupt-parent = <&gpio>;
+				interrupts = <27 4>; /* active high level-sensitive */
+				pinctrl-names = "default";
+				pinctrl-0 = <&sn65dsi83_pins>;
+				status = "okay";
+				
+				display-timings {			
+					/* Default: Rocktech 7in. panel RK070CU01H-CTG */
+					lvds {
+						clock-frequency = <51200000>;
+						hactive = <1024>;
+						vactive = <600>;
+						hfront-porch = <160>;
+						hback-porch = <140>;
+						hsync-len = <20>;
+						vback-porch = <20>;
+						vfront-porch = <12>;
+						vsync-len = <3>;
+						hsync-active = <1>;
+						vsync-active = <1>;
+						de-active = <1>;
+						pixelclk-active = <0>;
+					};
+				};
+				
+				port {
+					dsi_lvds_bridge_in: endpoint {
+						remote-endpoint = <&mipi_dsi_lvds_out>;
+					};
+				};
+			};
+		};
+	};
+	
+	fragment@2 {
+		target = <&dsi1>;
+		__overlay__ {
+			status = "okay";
+			port {
+				mipi_dsi_lvds_out: endpoint {
+					remote-endpoint = <&dsi_lvds_bridge_in>;
+				};
+			};
+		};
+	};
+	
+	__overrides__ {
+		addr = <&sn65dsi83>,"reg:0";
+		dsi-lanes = <&sn65dsi83>,"ti,dsi-lanes:0";
+		lvds-format = <&sn65dsi83>,"ti,lvds-format:0";
+		lvds-bpp = <&sn65dsi83>,"ti,lvds-bpp:0";
+		width-mm = <&sn65dsi83>,"ti,width-mm:0";
+		height-mm = <&sn65dsi83>,"ti,height-mm:0";
+		clock-frequency = <&sn65dsi83>,"clock-frequency:0";
+		hactive = <&sn65dsi83>,"hactive:0";
+		vactive = <&sn65dsi83>,"vactive:0";
+		hfront-porch = <&sn65dsi83>,"hfront-porch:0";
+		hback-porch = <&sn65dsi83>,"hback-porch:0";
+		hsync-len = <&sn65dsi83>,"hsync-len:0";
+		vback-porch = <&sn65dsi83>,"vback-porch:0";
+		vfront-porch = <&sn65dsi83>,"vfront-porch:0";
+		vsync-len = <&sn65dsi83>,"vsync-len:0";
+		hsync-active = <&sn65dsi83>,"hsync-active:0";
+		vsync-active = <&sn65dsi83>,"vsync-active:0";
+		de-active = <&sn65dsi83>,"de-active:0";
+		pixelclk-active = <&sn65dsi83>,"pixelclk-active:0";
+	};
+};
