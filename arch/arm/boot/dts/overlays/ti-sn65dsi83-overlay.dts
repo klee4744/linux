@@ -1,10 +1,8 @@
-/*
- * Device Tree overlay for TI SN65DSI83 MIPI DSI to LVDS bridge driver
- *
- */
- 
+// Device Tree overlay for TI SN65DSI83 MIPI DSI to LVDS bridge driver
 /dts-v1/;
 /plugin/;
+#include <dt-bindings/pinctrl/bcm2835.h>
+#include <dt-bindings/gpio/gpio.h>
 
 /{
 	compatible = "brcm,bcm2835";
@@ -14,7 +12,10 @@
 		__overlay__ {
 			sn65dsi83_pins: sn65dsi83_pins {
 				brcm,pins = <17 27>;
-				brcm,function = <1 0>; /* out in */
+				brcm,function = <					
+					BCM2835_FSEL_GPIO_OUT
+					BCM2835_FSEL_GPIO_IN
+				>;
 				brcm,pull = <0 1>; /* none pulldown */
 			};
 		};
@@ -35,7 +36,7 @@
 				ti,lvds-bpp = <24>;
 				ti,width-mm = <154>;
 				ti,height-mm = <86>;
-				enable-gpios = <&gpio 17 0>;
+				enable-gpios = <&gpio 17 GPIO_ACTIVE_HIGH>;
 				interrupt-parent = <&gpio>;
 				interrupts = <27 4>; /* active high level-sensitive */
 				pinctrl-names = "default";
