@@ -213,7 +213,8 @@ dtbo-$(CONFIG_ARCH_BCM2835) += \
 	w1-gpio-pullup.dtbo \
 	w5500.dtbo \
 	wittypi.dtbo \
-	wm8960-soundcard.dtbo
+	wm8960-soundcard.dtbo \
+	ti-sn65dsi83.dtbo
 
 targets += dtbs dtbs_install
 targets += $(dtbo-y)
