@@ -35,7 +35,7 @@
 				ti,lvds-bpp = <24>;
 				ti,width-mm = <154>;
 				ti,height-mm = <86>;
-				enable-gpios = <&gpio 17 GPIO_ACTIVE_HIGH>;
+				enable-panel = <&gpio 17 GPIO_ACTIVE_HIGH>;
 				interrupt-parent = <&gpio>;
 				interrupts = <27 4>; /* active high level-sensitive */
 				pinctrl-names = "default";
