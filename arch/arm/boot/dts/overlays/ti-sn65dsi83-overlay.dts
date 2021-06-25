@@ -13,7 +13,7 @@
 		target = <&gpio>;
 		__overlay__ {
 			sn65dsi83_pins: sn65dsi83_pins {
-				brcm,pins = <22 27>;
+				brcm,pins = <17 27>;
 				brcm,function = <1 0>; /* out in */
 				brcm,pull = <0 1>; /* none pulldown */
 			};
@@ -35,7 +35,8 @@
 				ti,lvds-bpp = <24>;
 				ti,width-mm = <154>;
 				ti,height-mm = <86>;
-				enable-gpios = <&gpio 22 0>; /* GPIO active high */
+				gpio-hog;
+				enable-gpios = <&gpio 17 0>; /* GPIO active high */
 				interrupt-parent = <&gpio>;
 				interrupts = <27 4>; /* active high level-sensitive */
 				pinctrl-names = "default";
