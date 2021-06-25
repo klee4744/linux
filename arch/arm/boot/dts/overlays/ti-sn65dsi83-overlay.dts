@@ -13,15 +13,15 @@
 		target = <&gpio>;
 		__overlay__ {
 			sn65dsi83_pins: sn65dsi83_pins {
-				brcm,pins = <17 27>;
-				brcm,function = <1 0>; /* out in */
-				brcm,pull = <0 1>; /* none pulldown */
+				brcm,pins = <24 25>;
+				brcm,function = <0 1>; /* in out */
+				brcm,pull = <1 0>; /* pulldown none */
 			};
 		};
 	};
 
 	fragment@1 {
-		target = <&i2c1>;
+		target = <&i2c_arm>;
 		__overlay__ {
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -38,9 +38,9 @@
 				ti,lvds-bpp = <24>;
 				ti,width-mm = <154>;
 				ti,height-mm = <86>;
-				enable-gpios = <&gpio 17 0>; /* GPIO active high */
+				enable-gpios = <&gpio 25 0>; /* GPIO active high */
 				interrupt-parent = <&gpio>;
-				interrupts = <27 4>; /* active high level-sensitive */
+				interrupts = <24 4>; /* active high level-sensitive */
 				status = "okay";
 				
 				display-timings {			
