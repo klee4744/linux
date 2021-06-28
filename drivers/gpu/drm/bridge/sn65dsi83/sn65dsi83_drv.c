@@ -10,6 +10,7 @@
 #include <linux/of_graph.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>
+#include <linux/delay.h>
 
 #include <drm/drm_atomic.h>
 #include <drm/drm_atomic_helper.h>
@@ -198,7 +199,7 @@ static int sn65dsi83_bridge_attach(struct drm_bridge *bridge)
     return ret;
 }
 
-static struct drm_bridge_funcs sn65dsi83_bridge_funcs = {
+static const struct drm_bridge_funcs sn65dsi83_bridge_funcs = {
     .enable = sn65dsi83_bridge_enable,
     .disable = sn65dsi83_bridge_disable,
     .mode_set = sn65dsi83_bridge_mode_set,
