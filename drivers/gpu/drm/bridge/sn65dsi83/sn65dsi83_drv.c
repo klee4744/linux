@@ -17,6 +17,9 @@
 #include <drm/drm_mipi_dsi.h>
 #include <drm/drm_connector.h>
 #include <drm/drm_crtc_helper.h>
+#include <drm/drm_bridge.h>
+#include <drm/drm_print.h>
+#include <drm/drm_mode.h>
 #include <video/mipi_display.h>
 #include <video/of_display_timing.h>
 #include <video/of_videomode.h>
@@ -76,9 +79,9 @@ static int sn65dsi83_connector_get_modes(struct drm_connector *connector)
         *bus_flags |= DRM_BUS_FLAG_DE_HIGH;
     if (brg->vm.flags & DISPLAY_FLAGS_DE_LOW)
         *bus_flags |= DRM_BUS_FLAG_DE_LOW;
-    if (brg->vm.flags & DISPLAY_FLAGS_PIXDATA_NEGEDGE)
+    if (brg->vm.flags & DISPLAY_FLAGS_PIXDATA_DRIVE_NEGEDGE)
         *bus_flags |= DRM_BUS_FLAG_PIXDATA_NEGEDGE;
-    if (brg->vm.flags & DISPLAY_FLAGS_PIXDATA_POSEDGE)
+    if (brg->vm.flags & DISPLAY_FLAGS_PIXDATA_DRIVE_POSEDGE)
         *bus_flags |= DRM_BUS_FLAG_PIXDATA_POSEDGE;
 
     ret = drm_display_info_set_bus_formats(&connector->display_info,
