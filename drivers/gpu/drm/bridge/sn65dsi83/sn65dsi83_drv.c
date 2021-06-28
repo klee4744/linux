@@ -170,11 +170,17 @@ static void sn65dsi83_bridge_mode_set(struct drm_bridge *bridge,
     drm_mode_copy(&sn65dsi83->curr_mode, adj_mode);
 }
 
-static int sn65dsi83_bridge_attach(struct drm_bridge *bridge)
+static int sn65dsi83_bridge_attach(struct drm_bridge *bridge
+				   enum drm_bridge_attach_flags flags)
 {
     struct sn65dsi83 *sn65dsi83 = bridge_to_sn65dsi83(bridge);
     int ret;
-
+	
+    if (flags & DRM_BRIDGE_ATTACH_NO_CONNECTOR) {
+        DRM_ERROR("Fix bridge driver to make connector optional!");
+        return -EINVAL;
+    }
+	
     dev_dbg(DRM_DEVICE(bridge),"%s\n",__func__);
     if (!bridge->encoder) {
         DRM_ERROR("Parent encoder object not found");
