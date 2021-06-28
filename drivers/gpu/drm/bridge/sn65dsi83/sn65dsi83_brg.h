@@ -1,6 +1,7 @@
 #ifndef _SN65DSI83_BRG_H__
 #define _SN65DSI83_BRG_H__
 
+#include <linux/delay.h>
 #include <linux/i2c.h>
 #include <linux/gpio/consumer.h>
 #include <video/videomode.h>
