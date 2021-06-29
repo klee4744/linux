@@ -175,10 +175,10 @@ static int sn65dsi83_bridge_attach(struct drm_bridge *bridge,
     struct sn65dsi83 *sn65dsi83 = bridge_to_sn65dsi83(bridge);
     int ret;
 	
-    if (flags & DRM_BRIDGE_ATTACH_NO_CONNECTOR) {
-        DRM_ERROR("Fix bridge driver to make connector optional!");
-        return -EINVAL;
-    }
+//     if (flags & DRM_BRIDGE_ATTACH_NO_CONNECTOR) {
+//         DRM_ERROR("Fix bridge driver to make connector optional!");
+//         return -EINVAL;
+//     }
 	
     dev_dbg(DRM_DEVICE(bridge),"%s\n",__func__);
     if (!bridge->encoder) {
@@ -204,7 +204,7 @@ static int sn65dsi83_bridge_attach(struct drm_bridge *bridge,
     return ret;
 }
 
-static const struct drm_bridge_funcs sn65dsi83_bridge_funcs = {
+static struct drm_bridge_funcs sn65dsi83_bridge_funcs = {
     .enable = sn65dsi83_bridge_enable,
     .disable = sn65dsi83_bridge_disable,
     .mode_set = sn65dsi83_bridge_mode_set,
