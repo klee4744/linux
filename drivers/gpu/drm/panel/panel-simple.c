@@ -3219,6 +3219,38 @@ static const struct panel_desc qd43003c0_40 = {
 	.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
 };
 
+static const struct display_timing rocktech_rk070cu01h_ctg_timing = {
+	.pixelclock = { 45000000, 51200000, 57000000 },
+	.hactive = { 1024, 1024, 1024 },
+	.hfront_porch = { 140, 160, 180 },
+	.hback_porch = { 140, 140, 140 },
+	.hsync_len = { 20, 20, 20 },
+	.vactive = { 600, 600, 600 },
+	.vfront_porch = { 2, 12, 22 },
+	.vback_porch = { 20, 20, 20 },
+	.vsync_len = { 3, 3, 3 },
+	.flags = DRM_MODE_FLAG_NHSYNC |
+		 DRM_MODE_FLAG_NVSYNC |
+		 DISPLAY_FLAGS_DE_HIGH,
+};
+
+static const struct panel_desc rocktech_rk070cu01h_ctg = {
+	.timings = &rocktech_rk070cu01h_ctg_timing,
+	.num_timings = 1,
+	.bpc = 8,
+	.size = {
+		.width = 86,
+		.height = 154,
+	},
+	.delay = {
+		.enable = 200,
+		.disable = 110,
+	},
+	.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
+	.bus_flags = DRM_BUS_FLAG_DE_HIGH,
+	.connector_type = DRM_MODE_CONNECTOR_LVDS,
+};
+
 static const struct display_timing rocktech_rk070er9427_timing = {
 	.pixelclock = { 26400000, 33300000, 46800000 },
 	.hactive = { 800, 800, 800 },
@@ -4239,6 +4271,9 @@ static const struct of_device_id platform_of_match[] = {
 	}, {
 		.compatible = "qiaodian,qd43003c0-40",
 		.data = &qd43003c0_40,
+	}, {
+		.compatible = "rocktech,rk070cu01h-ctg",
+		.data = &rocktech_rk070cu01h_ctg,
 	}, {
 		.compatible = "rocktech,rk070er9427",
 		.data = &rocktech_rk070er9427,
