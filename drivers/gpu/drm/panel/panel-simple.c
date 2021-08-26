@@ -3278,7 +3278,7 @@ static const struct panel_desc rocktech_rk070er9427 = {
 		.unprepare = 41,
 		.disable = 50,
 	},
-	.bus_format = MEDIA_BUS_FMT_RGB666_1X18,
+	.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
 };
 
 static const struct drm_display_mode rocktech_rk101ii01d_ct_mode = {
