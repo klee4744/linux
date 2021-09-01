@@ -3263,12 +3263,8 @@ static const struct panel_desc rocktech_rk070cu01h_ctg = {
 	.num_timings = 1,
 	.bpc = 8,
 	.size = {
-		.width = 86,
-		.height = 154,
-	},
-	.delay = {
-		.enable = 200,
-		.disable = 110,
+		.width = 154,
+		.height = 86,
 	},
 	.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
 	.bus_flags = DRM_BUS_FLAG_DE_HIGH,
