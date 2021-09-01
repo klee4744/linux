@@ -3070,6 +3070,30 @@ static const struct panel_desc ontat_yx700wv03 = {
 	.bus_format = MEDIA_BUS_FMT_RGB666_1X18,
 };
 
+static const struct drm_display_mode orient_afv19201080a0_mode = {
+	.clock = 153600,
+	.hdisplay = 1920,
+	.hsync_start = 1920 + 80,
+	.hsync_end = 1920 + 80 + 80,
+	.htotal = 1920 + 80 + 80+ 127,
+	.vdisplay = 1080,
+	.vsync_start = 1080 + 20,
+	.vsync_end = 1080 + 20 + 20,
+	.vtotal = 1080 + 20 + 20 + 40,
+};
+
+static const struct panel_desc orient_afv19201080a0 = {
+	.modes = &orient_afv19201080a0_mode,
+	.num_modes = 1,
+	.bpc = 8,
+	.size = {
+		.width = 344,
+		.height = 194,
+	},
+  .bus_format = MEDIA_BUS_FMT_RGB888_1X24,
+	.connector_type = DRM_MODE_CONNECTOR_eDP,
+};
+
 static const struct drm_display_mode ortustech_com37h3m_mode  = {
 	.clock = 22230,
 	.hdisplay = 480,
@@ -4250,6 +4274,9 @@ static const struct of_device_id platform_of_match[] = {
 	}, {
 		.compatible = "ontat,yx700wv03",
 		.data = &ontat_yx700wv03,
+	}, {
+		.compatible = "orient,afv19201080a0",
+		.data = &orient_afv19201080a0,
 	}, {
 		.compatible = "ortustech,com37h3m05dtc",
 		.data = &ortustech_com37h3m,
