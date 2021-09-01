@@ -3271,6 +3271,34 @@ static const struct panel_desc rocktech_rk070cu01h_ctg = {
 	.connector_type = DRM_MODE_CONNECTOR_LVDS,
 };
 
+static const struct display_timing rocktech_rk101ii01e-ct_timing = {
+	.pixelclock = { 68900000, 71100000, 73400000 },
+	.hactive = { 1280, 1280, 1280 },
+	.hfront_porch = { 60, 90, 120 },
+	.hback_porch = { 22, 22, 22 },
+	.hsync_len = { 48, 48, 48 },
+	.vactive = { 800, 800, 800 },
+	.vfront_porch = { 2, 4, 14 },
+	.vback_porch = { 10, 16, 16 },
+	.vsync_len = { 3, 3, 3 },
+	.flags = DRM_MODE_FLAG_NHSYNC |
+		 DRM_MODE_FLAG_NVSYNC |
+		 DISPLAY_FLAGS_DE_HIGH,
+};
+
+static const struct panel_desc rocktech_rk101ii01e-ct = {
+	.timings = &rocktech_rk070cu01h_ctg_timing,
+	.num_timings = 1,
+	.bpc = 8,
+	.size = {
+		.width = 217,
+		.height = 149,
+	},
+	.bus_format = MEDIA_BUS_FMT_RGB888_1X7X4_SPWG,
+	.bus_flags = DRM_BUS_FLAG_DE_HIGH,
+	.connector_type = DRM_MODE_CONNECTOR_LVDS,
+};
+
 static const struct display_timing rocktech_rk070er9427_timing = {
 	.pixelclock = { 26400000, 33300000, 46800000 },
 	.hactive = { 800, 800, 800 },
@@ -4297,6 +4325,9 @@ static const struct of_device_id platform_of_match[] = {
 	}, {
 		.compatible = "rocktech,rk070cu01h-ctg",
 		.data = &rocktech_rk070cu01h_ctg,
+	}, {
+	 	.compatible = "rocktech,rk101ii01e-ct",
+		.data = &rocktech_rk101ii01e-ct,
 	}, {
 		.compatible = "rocktech,rk070er9427",
 		.data = &rocktech_rk070er9427,
