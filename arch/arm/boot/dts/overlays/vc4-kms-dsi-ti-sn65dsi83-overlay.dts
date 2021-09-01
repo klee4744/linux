@@ -9,11 +9,44 @@
 / {
 	compatible = "brcm,bcm2835";
 
+	/* PWM0 function */
 	fragment@0 {
+		target = <&gpio>;
+		__overlay__ {
+			pwm_pins: pwm_pins {
+				brcm,pins = <18>;
+				brcm,function = <2>; /* Alt5 */
+			};
+		};
+	};
+
+	fragment@1 {
+		target = <&pwm>;
+		frag1: __overlay__ {
+			pinctrl-names = "default";
+			pinctrl-0 = <&pwm_pins>;
+			assigned-clock-rates = <100000000>;
+			status = "okay";
+		};
+	};
+
+	fragment@2 {
 		target-path = "/";
 		__overlay__ {
+			//#gpio-cells = <2>;
+			/* Panel backlight through PWM0 on GPIO 12 */
+			backlight_lvds: backlight {
+				compatible = "pwm-backlight";
+				pwms = <&pwm 0 5000000>; /* Period of 5000000ns means 200Hz */
+				brightness-levels = <0  1000>;
+				num-interpolated-steps = <1000>;
+				default-brightness-level = <800>;
+				enable-gpios = <&gpio 1 0>; /* Backlight enable... */
+			};
+
 			panel: panel {
 				compatible = "rocktech,rk070cu01h-ctg", "simple-panel";
+				backlight = <&backlight_lvds>;
 
 				port {
 					panel_in_lvds: endpoint {
@@ -24,7 +57,7 @@
 		};
 	};
 
-	fragment@1 {
+	fragment@3 {
 		target = <&i2c_csi_dsi>;
 		__overlay__ {
 			#gpio-cells = <2>;
@@ -60,7 +93,7 @@
 		};
 	};
 
-	fragment@2 {
+	fragment@4 {
 		target = <&dsi1>;
 		__overlay__ {
 			#address-cells = <1>;
@@ -75,14 +108,14 @@
 		};
 	};
 
-	fragment@3 {
+	fragment@5 {
 		target = <&i2c0if>;
 		__overlay__ {
 			status = "okay";
 		};
 	};
 		
-	fragment@4 {
+	fragment@6 {
 		target = <&i2c0mux>;
 		__overlay__ {
 			status = "okay";
