@@ -8,7 +8,7 @@
 
 
 
- Revision and Date:						V1.01 01-19-2021
+ Revision and Date:						V1.02 09-27-2021
  ****************************************************************************************************************
  ****************************************************************************************************************
 
@@ -32,6 +32,8 @@
 #define PHMI_TS04_PID		0xfa01
 #define PHMI_TS07_PID		0xfa02
 #define PHMI_TS10_PID		0xfa03
+#define PHMI_07_PID		0xfa04
+#define PHMI_10_PID		0xfa05
 /* USB Class Code */
 #define CDC_DATA		0x0a
 
@@ -40,6 +42,8 @@ static const struct usb_device_id id_table[] = {
 	{ USB_DEVICE_INTERFACE_CLASS(FACTS_VID, PHMI_TS04_PID, CDC_DATA) },
 	{ USB_DEVICE_INTERFACE_CLASS(FACTS_VID, PHMI_TS07_PID, CDC_DATA) },
 	{ USB_DEVICE_INTERFACE_CLASS(FACTS_VID, PHMI_TS10_PID, CDC_DATA) },
+	{ USB_DEVICE_INTERFACE_CLASS(FACTS_VID, PHMI_07_PID, CDC_DATA) },
+	{ USB_DEVICE_INTERFACE_CLASS(FACTS_VID, PHMI_10_PID, CDC_DATA) },
 	{ }	/* Terminating entry */
 };
 MODULE_DEVICE_TABLE(usb, id_table);
