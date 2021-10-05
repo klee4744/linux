@@ -239,7 +239,7 @@ int drm_of_find_panel_or_bridge(const struct device_node *np,
 				struct drm_bridge **bridge)
 {
 	int ret = -EPROBE_DEFER;
-	struct device_node *remote;
+	struct device_node *remote, *endpoint_node;
 
 	if (!panel && !bridge)
 		return -EINVAL;
@@ -255,9 +255,18 @@ int drm_of_find_panel_or_bridge(const struct device_node *np,
 	if (!of_graph_is_present(np))
 		return -ENODEV;
 
-	remote = of_graph_get_remote_node(np, port, endpoint);
-	if (!remote)
+	endpoint_node = of_graph_get_endpoint_by_regs(np, port, endpoint);
+	if (!endpoint_node) {
+		pr_debug("no valid endpoint (%d, %d) for node %pOF\n",
+			 port, endpoint, np);
 		return -ENODEV;
+	}
+
+	remote = of_graph_get_remote_endpoint(endpoint_node);
+	of_node_put(endpoint_node);
+	if (!remote) {
+		return -ENODEV;
+	}
 
 	if (panel) {
 		*panel = of_drm_find_panel(remote);
@@ -280,6 +289,33 @@ int drm_of_find_panel_or_bridge(const struct device_node *np,
 	}
 
 	of_node_put(remote);
+
+	if (ret) {
+		remote = of_graph_get_remote_node(np, port, endpoint);
+		if (!remote)
+			return -ENODEV;
+		if (panel) {
+			*panel = of_drm_find_panel(remote);
+			if (!IS_ERR(*panel))
+				ret = 0;
+			else
+				*panel = NULL;
+		}
+
+		/* No panel found yet, check for a bridge next. */
+		if (bridge) {
+			if (ret) {
+				*bridge = of_drm_find_bridge(remote);
+				if (*bridge)
+					ret = 0;
+			} else {
+				*bridge = NULL;
+			}
+		}
+
+		of_node_put(remote);
+	}
+
 	return ret;
 }
 EXPORT_SYMBOL_GPL(drm_of_find_panel_or_bridge);
