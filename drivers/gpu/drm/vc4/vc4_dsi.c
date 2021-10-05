@@ -1060,7 +1060,8 @@ update_state:
 	return ret;
 }
 
-static void vc4_dsi_encoder_disable(struct drm_encoder *encoder)
+static void vc4_dsi_encoder_disable(struct drm_encoder *encoder,
+				    struct drm_atomic_state *state)
 {
 	struct vc4_dsi_encoder *vc4_encoder = to_vc4_dsi_encoder(encoder);
 	struct vc4_dsi *dsi = vc4_encoder->dsi;
@@ -1135,7 +1136,8 @@ static void vc4_dsi_encoder_mode_set(struct drm_encoder *encoder,
 		dsi->hs_rate = adjusted_mode->clock * 1000;
 }
 
-static void vc4_dsi_encoder_enable(struct drm_encoder *encoder)
+static void vc4_dsi_encoder_enable(struct drm_encoder *encoder,
+				   struct drm_atomic_state *state)
 {
 	struct drm_display_mode *mode = &encoder->crtc->state->adjusted_mode;
 	struct vc4_dsi_encoder *vc4_encoder = to_vc4_dsi_encoder(encoder);
@@ -1408,8 +1410,8 @@ static const struct mipi_dsi_host_ops vc4_dsi_host_ops = {
 };
 
 static const struct drm_encoder_helper_funcs vc4_dsi_encoder_helper_funcs = {
-	.disable = vc4_dsi_encoder_disable,
-	.enable = vc4_dsi_encoder_enable,
+	.atomic_disable = vc4_dsi_encoder_disable,
+	.atomic_enable = vc4_dsi_encoder_enable,
 	.mode_fixup = vc4_dsi_encoder_mode_fixup,
 	.mode_set = vc4_dsi_encoder_mode_set,
 };
