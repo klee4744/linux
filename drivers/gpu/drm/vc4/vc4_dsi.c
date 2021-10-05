@@ -554,6 +554,7 @@ struct vc4_dsi {
 	struct mipi_dsi_host dsi_host;
 	struct drm_encoder *encoder;
 	struct drm_bridge *out_bridge;
+	struct drm_bridge bridge;
 
 	void __iomem *regs;
 
@@ -655,6 +656,12 @@ static inline struct vc4_dsi_encoder *
 to_vc4_dsi_encoder(struct drm_encoder *encoder)
 {
 	return container_of(encoder, struct vc4_dsi_encoder, base.base);
+}
+
+static inline struct vc4_dsi *
+bridge_to_vc4_dsi(struct drm_bridge *bridge)
+{
+	return container_of(bridge, struct vc4_dsi, bridge);
 }
 
 static const struct debugfs_reg32 dsi0_regs[] = {
@@ -1060,11 +1067,10 @@ update_state:
 	return ret;
 }
 
-static void vc4_dsi_encoder_disable(struct drm_encoder *encoder,
-				    struct drm_atomic_state *state)
+static void vc4_dsi_bridge_post_disable(struct drm_bridge *bridge,
+					struct drm_bridge_state *state)
 {
-	struct vc4_dsi_encoder *vc4_encoder = to_vc4_dsi_encoder(encoder);
-	struct vc4_dsi *dsi = vc4_encoder->dsi;
+	struct vc4_dsi *dsi = bridge_to_vc4_dsi(bridge);
 
 	vc4_dsi_host_set_state(&dsi->dsi_host, DSI_STANDBY);
 }
@@ -1106,12 +1112,11 @@ vc4_dsi_fixup_clock(struct vc4_dsi *dsi, unsigned long pixel_clock_hz)
  * higher-than-expected clock rate to the panel, but that's what the
  * firmware does too.
  */
-static bool vc4_dsi_encoder_mode_fixup(struct drm_encoder *encoder,
-				       const struct drm_display_mode *mode,
-				       struct drm_display_mode *adjusted_mode)
+static bool vc4_dsi_bridge_mode_fixup(struct drm_bridge *bridge,
+				      const struct drm_display_mode *mode,
+				      struct drm_display_mode *adjusted_mode)
 {
-	struct vc4_dsi_encoder *vc4_encoder = to_vc4_dsi_encoder(encoder);
-	struct vc4_dsi *dsi = vc4_encoder->dsi;
+	struct vc4_dsi *dsi = bridge_to_vc4_dsi(bridge);
 
 	adjusted_mode->clock = vc4_dsi_fixup_clock(dsi, mode->clock * 1000) /
 									1000;
@@ -1125,23 +1130,21 @@ static bool vc4_dsi_encoder_mode_fixup(struct drm_encoder *encoder,
 	return true;
 }
 
-static void vc4_dsi_encoder_mode_set(struct drm_encoder *encoder,
-				     struct drm_display_mode *mode,
-				     struct drm_display_mode *adjusted_mode)
+static void vc4_dsi_bridge_mode_set(struct drm_bridge *bridge,
+				    const struct drm_display_mode *mode,
+				    const struct drm_display_mode *adjusted_mode)
 {
-	struct vc4_dsi_encoder *vc4_encoder = to_vc4_dsi_encoder(encoder);
-	struct vc4_dsi *dsi = vc4_encoder->dsi;
+	struct vc4_dsi *dsi = bridge_to_vc4_dsi(bridge);
 
 	if (!dsi->hs_rate)
 		dsi->hs_rate = adjusted_mode->clock * 1000;
 }
 
-static void vc4_dsi_encoder_enable(struct drm_encoder *encoder,
-				   struct drm_atomic_state *state)
+static void vc4_dsi_bridge_pre_enable(struct drm_bridge *bridge,
+				      struct drm_bridge_state *old_state)
 {
-	struct drm_display_mode *mode = &encoder->crtc->state->adjusted_mode;
-	struct vc4_dsi_encoder *vc4_encoder = to_vc4_dsi_encoder(encoder);
-	struct vc4_dsi *dsi = vc4_encoder->dsi;
+	struct vc4_dsi *dsi = bridge_to_vc4_dsi(bridge);
+	struct drm_display_mode *mode = &dsi->encoder->crtc->state->adjusted_mode;
 	bool debug_dump_regs = false;
 
 	if (debug_dump_regs) {
@@ -1177,6 +1180,16 @@ static void vc4_dsi_encoder_enable(struct drm_encoder *encoder,
 		dev_info(&dsi->pdev->dev, "DSI regs after:\n");
 		drm_print_regset32(&p, &dsi->regset);
 	}
+}
+
+static int vc4_dsi_bridge_attach(struct drm_bridge *bridge,
+				 enum drm_bridge_attach_flags flags)
+{
+	struct vc4_dsi *dsi = bridge_to_vc4_dsi(bridge);
+
+	/* Attach the panel or bridge to the dsi bridge */
+	return drm_bridge_attach(bridge->encoder, dsi->out_bridge,
+				 &dsi->bridge, flags);
 }
 
 static ssize_t vc4_dsi_host_transfer(struct mipi_dsi_host *host,
@@ -1409,11 +1422,15 @@ static const struct mipi_dsi_host_ops vc4_dsi_host_ops = {
 	.set_state = vc4_dsi_host_set_state,
 };
 
-static const struct drm_encoder_helper_funcs vc4_dsi_encoder_helper_funcs = {
-	.atomic_disable = vc4_dsi_encoder_disable,
-	.atomic_enable = vc4_dsi_encoder_enable,
-	.mode_fixup = vc4_dsi_encoder_mode_fixup,
-	.mode_set = vc4_dsi_encoder_mode_set,
+static const struct drm_bridge_funcs vc4_dsi_bridge_funcs = {
+	.atomic_duplicate_state = drm_atomic_helper_bridge_duplicate_state,
+	.atomic_destroy_state = drm_atomic_helper_bridge_destroy_state,
+	.atomic_reset = drm_atomic_helper_bridge_reset,
+	.atomic_pre_enable = vc4_dsi_bridge_pre_enable,
+	.atomic_post_disable = vc4_dsi_bridge_post_disable,
+	.attach = vc4_dsi_bridge_attach,
+	.mode_fixup = vc4_dsi_bridge_mode_fixup,
+	.mode_set = vc4_dsi_bridge_mode_set,
 };
 
 static const struct vc4_dsi_variant bcm2711_dsi1_variant = {
@@ -1739,9 +1756,8 @@ static int vc4_dsi_bind(struct device *dev, struct device *master, void *data)
 		goto err_free_dma;
 
 	drm_simple_encoder_init(drm, dsi->encoder, DRM_MODE_ENCODER_DSI);
-	drm_encoder_helper_add(dsi->encoder, &vc4_dsi_encoder_helper_funcs);
 
-	ret = drm_bridge_attach(dsi->encoder, dsi->out_bridge, NULL, 0);
+	ret = drm_bridge_attach(dsi->encoder, &dsi->bridge, NULL, 0);
 	if (ret) {
 		dev_err(dev, "bridge attach failed: %d\n", ret);
 		goto err_free_dma;
@@ -1819,6 +1835,12 @@ static int vc4_dsi_dev_probe(struct platform_device *pdev)
 	dsi->dsi_host.dev = dev;
 	mipi_dsi_host_register(&dsi->dsi_host);
 
+	dsi->bridge.funcs = &vc4_dsi_bridge_funcs;
+	dsi->bridge.of_node = dev->of_node;
+	dsi->bridge.type = DRM_MODE_CONNECTOR_DSI;
+
+	drm_bridge_add(&dsi->bridge);
+
 	ret = component_add(&pdev->dev, &vc4_dsi_ops);
 	if (ret) {
 		mipi_dsi_host_unregister(&dsi->dsi_host);
@@ -1834,6 +1856,7 @@ static int vc4_dsi_dev_remove(struct platform_device *pdev)
 	struct vc4_dsi *dsi = dev_get_drvdata(dev);
 
 	component_del(&pdev->dev, &vc4_dsi_ops);
+	drm_bridge_remove(&dsi->bridge);
 	mipi_dsi_host_unregister(&dsi->dsi_host);
 
 	return 0;
