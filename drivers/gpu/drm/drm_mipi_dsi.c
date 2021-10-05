@@ -359,6 +359,18 @@ static ssize_t mipi_dsi_device_transfer(struct mipi_dsi_device *dsi,
 	return ops->transfer(dsi->host, msg);
 }
 
+int mipi_dsi_set_state(struct mipi_dsi_device *dsi,
+		       enum mipi_dsi_lane_state state)
+{
+	const struct mipi_dsi_host_ops *ops = dsi->host->ops;
+
+	if (!ops || !ops->set_state)
+		return -ENOSYS;
+
+	return ops->set_state(dsi->host, state);
+}
+EXPORT_SYMBOL(mipi_dsi_set_state);
+
 /**
  * mipi_dsi_packet_format_is_short - check if a packet is of the short format
  * @type: MIPI DSI data type of the packet
