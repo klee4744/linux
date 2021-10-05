@@ -571,6 +571,8 @@ struct vc4_dsi {
 	u32 format;
 	u32 divider;
 	u32 mode_flags;
+	unsigned long hs_rate;
+	enum mipi_dsi_lane_state state;
 
 	/* Input clock from CPRMAN to the digital PHY, for the DSI
 	 * escape clock.
@@ -793,98 +795,12 @@ dsi_esc_timing(u32 ns)
 	return DIV_ROUND_UP(ns, ESC_TIME_NS);
 }
 
-static void vc4_dsi_encoder_disable(struct drm_encoder *encoder)
+static void vc4_dsi_power_up(struct vc4_dsi *dsi, unsigned long hs_clock)
 {
-	struct vc4_dsi_encoder *vc4_encoder = to_vc4_dsi_encoder(encoder);
-	struct vc4_dsi *dsi = vc4_encoder->dsi;
 	struct device *dev = &dsi->pdev->dev;
-	struct drm_bridge *iter;
-
-	list_for_each_entry_reverse(iter, &dsi->bridge_chain, chain_node) {
-		if (iter->funcs->disable)
-			iter->funcs->disable(iter);
-
-		if (iter == dsi->out_bridge)
-			break;
-	}
-
-	vc4_dsi_ulps(dsi, true);
-
-	list_for_each_entry_from(iter, &dsi->bridge_chain, chain_node) {
-		if (iter->funcs->post_disable)
-			iter->funcs->post_disable(iter);
-	}
-
-	clk_disable_unprepare(dsi->pll_phy_clock);
-	clk_disable_unprepare(dsi->escape_clock);
-	clk_disable_unprepare(dsi->pixel_clock);
-
-	pm_runtime_put(dev);
-}
-
-/* Extends the mode's blank intervals to handle BCM2835's integer-only
- * DSI PLL divider.
- *
- * On 2835, PLLD is set to 2Ghz, and may not be changed by the display
- * driver since most peripherals are hanging off of the PLLD_PER
- * divider.  PLLD_DSI1, which drives our DSI bit clock (and therefore
- * the pixel clock), only has an integer divider off of DSI.
- *
- * To get our panel mode to refresh at the expected 60Hz, we need to
- * extend the horizontal blank time.  This means we drive a
- * higher-than-expected clock rate to the panel, but that's what the
- * firmware does too.
- */
-static bool vc4_dsi_encoder_mode_fixup(struct drm_encoder *encoder,
-				       const struct drm_display_mode *mode,
-				       struct drm_display_mode *adjusted_mode)
-{
-	struct vc4_dsi_encoder *vc4_encoder = to_vc4_dsi_encoder(encoder);
-	struct vc4_dsi *dsi = vc4_encoder->dsi;
-	struct clk *phy_parent = clk_get_parent(dsi->pll_phy_clock);
-	unsigned long parent_rate = clk_get_rate(phy_parent);
-	unsigned long pixel_clock_hz = mode->clock * 1000;
-	unsigned long pll_clock = pixel_clock_hz * dsi->divider;
-	int divider;
-
-	/* Find what divider gets us a faster clock than the requested
-	 * pixel clock.
-	 */
-	for (divider = 1; divider < 7; divider++) {
-		if (parent_rate / (divider + 1) < pll_clock)
-			break;
-	}
-
-	/* Now that we've picked a PLL divider, calculate back to its
-	 * pixel clock.
-	 */
-	pll_clock = parent_rate / divider;
-	pixel_clock_hz = pll_clock / dsi->divider;
-
-	adjusted_mode->clock = pixel_clock_hz / 1000;
-
-	/* Given the new pixel clock, adjust HFP to keep vrefresh the same. */
-	adjusted_mode->htotal = adjusted_mode->clock * mode->htotal /
-				mode->clock;
-	adjusted_mode->hsync_end += adjusted_mode->htotal - mode->htotal;
-	adjusted_mode->hsync_start += adjusted_mode->htotal - mode->htotal;
-
-	return true;
-}
-
-static void vc4_dsi_encoder_enable(struct drm_encoder *encoder)
-{
-	struct drm_display_mode *mode = &encoder->crtc->state->adjusted_mode;
-	struct vc4_dsi_encoder *vc4_encoder = to_vc4_dsi_encoder(encoder);
-	struct vc4_dsi *dsi = vc4_encoder->dsi;
-	struct device *dev = &dsi->pdev->dev;
-	bool debug_dump_regs = false;
-	struct drm_bridge *iter;
-	unsigned long hs_clock;
 	u32 ui_ns;
 	/* Minimum LP state duration in escape clock cycles. */
 	u32 lpx = dsi_esc_timing(60);
-	unsigned long pixel_clock_hz = mode->clock * 1000;
 	unsigned long dsip_clock;
 	unsigned long phy_clock;
 	int ret;
@@ -895,17 +811,11 @@ static void vc4_dsi_encoder_enable(struct drm_encoder *encoder)
 		return;
 	}
 
-	if (debug_dump_regs) {
-		struct drm_printer p = drm_info_printer(&dsi->pdev->dev);
-		dev_info(&dsi->pdev->dev, "DSI regs before:\n");
-		drm_print_regset32(&p, &dsi->regset);
-	}
-
 	/* Round up the clk_set_rate() request slightly, since
 	 * PLLD_DSI1 is an integer divider and its rate selection will
 	 * never round up.
 	 */
-	phy_clock = (pixel_clock_hz + 1000) * dsi->divider;
+	phy_clock = (hs_clock + 1000) * dsi->divider;
 	ret = clk_set_rate(dsi->pll_phy_clock, phy_clock);
 	if (ret) {
 		dev_err(&dsi->pdev->dev,
@@ -1109,8 +1019,156 @@ static void vc4_dsi_encoder_enable(struct drm_encoder *encoder)
 	DSI_PORT_WRITE(PHY_AFEC0,
 		       DSI_PORT_READ(PHY_AFEC0) &
 		       ~DSI_PORT_BIT(PHY_AFEC0_RESET));
+}
 
-	vc4_dsi_ulps(dsi, false);
+static void vc4_dsi_power_down(struct vc4_dsi *dsi)
+{
+	struct device *dev = &dsi->pdev->dev;
+
+	vc4_dsi_ulps(dsi, true);
+
+	clk_disable_unprepare(dsi->pll_phy_clock);
+	clk_disable_unprepare(dsi->escape_clock);
+	clk_disable_unprepare(dsi->pixel_clock);
+
+	pm_runtime_put(dev);
+}
+
+static int vc4_dsi_host_set_state(struct mipi_dsi_host *host,
+				  enum mipi_dsi_lane_state state)
+{
+	struct vc4_dsi *dsi = host_to_dsi(host);
+	int ret = 0;
+
+	if (state == dsi->state)
+		return 0;
+
+	if (state == DSI_STANDBY) {
+		vc4_dsi_power_down(dsi);
+		goto update_state;
+	}
+
+	vc4_dsi_power_up(dsi, dsi->hs_rate);
+
+	if (state == DSI_ULPS)
+		vc4_dsi_ulps(dsi, true);
+	else
+		vc4_dsi_ulps(dsi, false);
+
+update_state:
+	dsi->state = state;
+
+	return ret;
+}
+
+static void vc4_dsi_encoder_disable(struct drm_encoder *encoder)
+{
+	struct vc4_dsi_encoder *vc4_encoder = to_vc4_dsi_encoder(encoder);
+	struct vc4_dsi *dsi = vc4_encoder->dsi;
+	struct drm_bridge *iter;
+
+	list_for_each_entry_reverse(iter, &dsi->bridge_chain, chain_node) {
+		if (iter->funcs->disable)
+			iter->funcs->disable(iter);
+
+		if (iter == dsi->out_bridge)
+			break;
+	}
+
+	vc4_dsi_host_set_state(&dsi->dsi_host, DSI_STANDBY);
+
+	list_for_each_entry_from(iter, &dsi->bridge_chain, chain_node) {
+		if (iter->funcs->post_disable)
+			iter->funcs->post_disable(iter);
+	}
+}
+
+static unsigned long
+vc4_dsi_fixup_clock(struct vc4_dsi *dsi, unsigned long pixel_clock_hz)
+{
+	struct clk *phy_parent = clk_get_parent(dsi->pll_phy_clock);
+	unsigned long parent_rate = clk_get_rate(phy_parent);
+	unsigned long pll_clock = pixel_clock_hz * dsi->divider;
+	int divider;
+
+	/* Find what divider gets us a faster clock than the requested
+	 * pixel clock.
+	 */
+	for (divider = 1; divider < 7; divider++) {
+		if (parent_rate / (divider + 1) < pll_clock)
+			break;
+	}
+
+	/* Now that we've picked a PLL divider, calculate back to its
+	 * pixel clock.
+	 */
+	pll_clock = parent_rate / divider;
+
+	return pll_clock / dsi->divider;
+}
+
+/* Extends the mode's blank intervals to handle BCM2835's integer-only
+ * DSI PLL divider.
+ *
+ * On 2835, PLLD is set to 2Ghz, and may not be changed by the display
+ * driver since most peripherals are hanging off of the PLLD_PER
+ * divider.  PLLD_DSI1, which drives our DSI bit clock (and therefore
+ * the pixel clock), only has an integer divider off of DSI.
+ *
+ * To get our panel mode to refresh at the expected 60Hz, we need to
+ * extend the horizontal blank time.  This means we drive a
+ * higher-than-expected clock rate to the panel, but that's what the
+ * firmware does too.
+ */
+static bool vc4_dsi_encoder_mode_fixup(struct drm_encoder *encoder,
+				       const struct drm_display_mode *mode,
+				       struct drm_display_mode *adjusted_mode)
+{
+	struct vc4_dsi_encoder *vc4_encoder = to_vc4_dsi_encoder(encoder);
+	struct vc4_dsi *dsi = vc4_encoder->dsi;
+
+	adjusted_mode->clock = vc4_dsi_fixup_clock(dsi, mode->clock * 1000) /
+									1000;
+
+	/* Given the new pixel clock, adjust HFP to keep vrefresh the same. */
+	adjusted_mode->htotal = adjusted_mode->clock * mode->htotal /
+				mode->clock;
+	adjusted_mode->hsync_end += adjusted_mode->htotal - mode->htotal;
+	adjusted_mode->hsync_start += adjusted_mode->htotal - mode->htotal;
+
+	return true;
+}
+
+static void vc4_dsi_encoder_mode_set(struct drm_encoder *encoder,
+				     struct drm_display_mode *mode,
+				     struct drm_display_mode *adjusted_mode)
+{
+	struct vc4_dsi_encoder *vc4_encoder = to_vc4_dsi_encoder(encoder);
+	struct vc4_dsi *dsi = vc4_encoder->dsi;
+
+	if (!dsi->hs_rate)
+		dsi->hs_rate = adjusted_mode->clock * 1000;
+}
+
+static void vc4_dsi_encoder_enable(struct drm_encoder *encoder)
+{
+	struct drm_display_mode *mode = &encoder->crtc->state->adjusted_mode;
+	struct vc4_dsi_encoder *vc4_encoder = to_vc4_dsi_encoder(encoder);
+	struct vc4_dsi *dsi = vc4_encoder->dsi;
+	bool debug_dump_regs = false;
+	struct drm_bridge *iter;
+
+	if (debug_dump_regs) {
+		struct drm_printer p = drm_info_printer(&dsi->pdev->dev);
+
+		dev_info(&dsi->pdev->dev, "DSI regs before:\n");
+		drm_print_regset32(&p, &dsi->regset);
+	}
+
+	if (!dsi->hs_rate)
+		dsi->hs_rate = mode->clock * 1000;
+
+	vc4_dsi_host_set_state(&dsi->dsi_host, DSI_ACTIVE);
 
 	list_for_each_entry_reverse(iter, &dsi->bridge_chain, chain_node) {
 		if (iter->funcs->pre_enable)
@@ -1139,6 +1197,7 @@ static void vc4_dsi_encoder_enable(struct drm_encoder *encoder)
 
 	if (debug_dump_regs) {
 		struct drm_printer p = drm_info_printer(&dsi->pdev->dev);
+
 		dev_info(&dsi->pdev->dev, "DSI regs after:\n");
 		drm_print_regset32(&p, &dsi->regset);
 	}
@@ -1153,6 +1212,10 @@ static ssize_t vc4_dsi_host_transfer(struct mipi_dsi_host *host,
 	int i, ret;
 	bool is_long = mipi_dsi_packet_format_is_long(msg->type);
 	u32 cmd_fifo_len = 0, pix_fifo_len = 0;
+
+	WARN_ON(!dsi->hs_rate && !(msg->flags & MIPI_DSI_MSG_USE_LPM));
+
+	vc4_dsi_host_set_state(&dsi->dsi_host, DSI_ACTIVE);
 
 	mipi_dsi_create_packet(&packet, msg);
 
@@ -1323,6 +1386,7 @@ static int vc4_dsi_host_attach(struct mipi_dsi_host *host,
 	dsi->lanes = device->lanes;
 	dsi->channel = device->channel;
 	dsi->mode_flags = device->mode_flags;
+	dsi->hs_rate = device->hs_rate;
 
 	switch (device->format) {
 	case MIPI_DSI_FMT_RGB888:
@@ -1366,12 +1430,14 @@ static const struct mipi_dsi_host_ops vc4_dsi_host_ops = {
 	.attach = vc4_dsi_host_attach,
 	.detach = vc4_dsi_host_detach,
 	.transfer = vc4_dsi_host_transfer,
+	.set_state = vc4_dsi_host_set_state,
 };
 
 static const struct drm_encoder_helper_funcs vc4_dsi_encoder_helper_funcs = {
 	.disable = vc4_dsi_encoder_disable,
 	.enable = vc4_dsi_encoder_enable,
 	.mode_fixup = vc4_dsi_encoder_mode_fixup,
+	.mode_set = vc4_dsi_encoder_mode_set,
 };
 
 static const struct vc4_dsi_variant bcm2711_dsi1_variant = {
