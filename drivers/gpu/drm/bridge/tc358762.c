@@ -147,7 +147,12 @@ static void tc358762_post_disable(struct drm_bridge *bridge)
 static void tc358762_pre_enable(struct drm_bridge *bridge)
 {
 	struct tc358762 *ctx = bridge_to_tc358762(bridge);
+	struct mipi_dsi_device *dsi = to_mipi_dsi_device(ctx->dev);
 	int ret;
+
+	ret = mipi_dsi_set_state(dsi, DSI_ACTIVE);
+	if (ret < 0 && ret != -ENOSYS)
+		dev_err(ctx->dev, "error requesting DSI host state (%d)\n", ret);
 
 	ret = regulator_enable(ctx->regulator);
 	if (ret < 0)
