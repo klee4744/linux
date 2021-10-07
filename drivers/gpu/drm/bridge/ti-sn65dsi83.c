@@ -306,22 +306,6 @@ err_dsi_attach:
 	return ret;
 }
 
-static void sn65dsi83_atomic_pre_enable(struct drm_bridge *bridge,
-					struct drm_bridge_state *old_bridge_state)
-{
-	struct sn65dsi83_output *op = bridge_to_sn65dsi83_output(bridge);
-	struct sn65dsi83 *ctx = sn65dsi83_output_to_sn65dsi83(op);
-	/*
-	 * Reset the chip, pull EN line low for t_reset=10ms,
-	 * then high for t_en=1ms.
-	 */
-	regcache_mark_dirty(ctx->regmap);
-	gpiod_set_value(ctx->enable_gpio, 0);
-	usleep_range(10000, 11000);
-	gpiod_set_value(ctx->enable_gpio, 1);
-	usleep_range(1000, 1100);
-}
-
 static u8 sn65dsi83_get_lvds_range(struct sn65dsi83_output *op,
 				   const struct drm_display_mode *mode)
 {
@@ -384,8 +368,8 @@ static u8 sn65dsi83_get_dsi_div(struct sn65dsi83_output *op)
 	return dsi_div - 1;
 }
 
-static void sn65dsi83_atomic_enable(struct drm_bridge *bridge,
-				    struct drm_bridge_state *old_bridge_state)
+static void sn65dsi83_atomic_pre_enable(struct drm_bridge *bridge,
+					struct drm_bridge_state *old_bridge_state)
 {
 	struct sn65dsi83_output *op = bridge_to_sn65dsi83_output(bridge);
 	struct sn65dsi83 *ctx = sn65dsi83_output_to_sn65dsi83(op);
@@ -446,6 +430,19 @@ static void sn65dsi83_atomic_enable(struct drm_bridge *bridge,
 	op->enabled = true;
 
 	if (!ctx->enabled) {
+		/* Need Channel A DSI running before powering on */
+		mipi_dsi_set_state(ctx->output[0].dsi, DSI_ACTIVE);
+		mipi_dsi_set_state(ctx->output[1].dsi, DSI_ACTIVE);
+		/*
+		 * Reset the chip, pull EN line low for t_reset=10ms,
+		 * then high for t_en=1ms.
+		 */
+		regcache_mark_dirty(ctx->regmap);
+		gpiod_set_value(ctx->enable_gpio, 0);
+		usleep_range(10000, 11000);
+		gpiod_set_value(ctx->enable_gpio, 1);
+		usleep_range(1000, 1100);
+
 		/* Clear reset, disable PLL */
 		regmap_write(ctx->regmap, REG_RC_RESET, 0x00);
 		regmap_write(ctx->regmap, REG_RC_PLL_EN, 0x00);
@@ -689,7 +686,6 @@ sn65dsi83_atomic_get_input_bus_fmts(struct drm_bridge *bridge,
 static const struct drm_bridge_funcs sn65dsi83_funcs = {
 	.attach			= sn65dsi83_attach,
 	.atomic_pre_enable	= sn65dsi83_atomic_pre_enable,
-	.atomic_enable		= sn65dsi83_atomic_enable,
 	.atomic_disable		= sn65dsi83_atomic_disable,
 	.atomic_post_disable	= sn65dsi83_atomic_post_disable,
 	.mode_valid		= sn65dsi83_mode_valid,
