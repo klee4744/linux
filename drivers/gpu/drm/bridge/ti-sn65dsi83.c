@@ -47,13 +47,16 @@
 /* Reset and clock registers */
 #define REG_RC_RESET				0x09
 #define  REG_RC_RESET_SOFT_RESET		BIT(0)
+
 #define REG_RC_LVDS_PLL				0x0a
 #define  REG_RC_LVDS_PLL_PLL_EN_STAT		BIT(7)
 #define  REG_RC_LVDS_PLL_LVDS_CLK_RANGE(n)	(((n) & 0x7) << 1)
 #define  REG_RC_LVDS_PLL_HS_CLK_SRC_DPHY	BIT(0)
+
 #define REG_RC_DSI_CLK				0x0b
 #define  REG_RC_DSI_CLK_DSI_CLK_DIVIDER(n)	(((n) & 0x1f) << 3)
 #define  REG_RC_DSI_CLK_REFCLK_MULTIPLIER(n)	((n) & 0x3)
+
 #define REG_RC_PLL_EN				0x0d
 #define  REG_RC_PLL_EN_PLL_EN			BIT(0)
 /* DSI registers */
@@ -65,11 +68,14 @@
 #define  REG_DSI_LANE_CHA_DSI_LANES(n)		(((n) & 0x3) << 3)
 #define  REG_DSI_LANE_CHB_DSI_LANES(n)		(((n) & 0x3) << 1)
 #define  REG_DSI_LANE_SOT_ERR_TOL_DIS		BIT(0)
+
 #define REG_DSI_EQ				0x11
 #define  REG_DSI_EQ_CHA_DSI_DATA_EQ(n)		(((n) & 0x3) << 6)
 #define  REG_DSI_EQ_CHA_DSI_CLK_EQ(n)		(((n) & 0x3) << 2)
-#define REG_DSI_CLK				0x12
-#define  REG_DSI_CLK_CHA_DSI_CLK_RANGE(n)	((n) & 0xff)
+
+#define REG_DSI_CHA_CLK				0x12
+#define REG_DSI_CHB_CLK				0x13
+#define  REG_DSI_CLK_CHx_DSI_CLK_RANGE(n)	((n) & 0xff)
 /* LVDS registers */
 #define REG_LVDS_FMT				0x18
 #define  REG_LVDS_FMT_DE_NEG_POLARITY		BIT(7)
@@ -80,21 +86,24 @@
 #define  REG_LVDS_FMT_CHB_24BPP_MODE		BIT(2)
 #define  REG_LVDS_FMT_CHA_24BPP_FORMAT1		BIT(1)
 #define  REG_LVDS_FMT_CHB_24BPP_FORMAT1		BIT(0)
+
 #define REG_LVDS_VCOM				0x19
 #define  REG_LVDS_VCOM_CHA_LVDS_VOCM		BIT(6)
 #define  REG_LVDS_VCOM_CHB_LVDS_VOCM		BIT(4)
 #define  REG_LVDS_VCOM_CHA_LVDS_VOD_SWING(n)	(((n) & 0x3) << 2)
 #define  REG_LVDS_VCOM_CHB_LVDS_VOD_SWING(n)	((n) & 0x3)
+
 #define REG_LVDS_LANE				0x1a
 #define  REG_LVDS_LANE_EVEN_ODD_SWAP		BIT(6)
 #define  REG_LVDS_LANE_CHA_REVERSE_LVDS		BIT(5)
 #define  REG_LVDS_LANE_CHB_REVERSE_LVDS		BIT(4)
 #define  REG_LVDS_LANE_CHA_LVDS_TERM		BIT(1)
 #define  REG_LVDS_LANE_CHB_LVDS_TERM		BIT(0)
+
 #define REG_LVDS_CM				0x1b
 #define  REG_LVDS_CM_CHA_LVDS_CM_ADJUST(n)	(((n) & 0x3) << 4)
 #define  REG_LVDS_CM_CHB_LVDS_CM_ADJUST(n)	((n) & 0x3)
-/* Video registers */
+/* Video registers channel A*/
 #define REG_VID_CHA_ACTIVE_LINE_LENGTH_LOW	0x20
 #define REG_VID_CHA_ACTIVE_LINE_LENGTH_HIGH	0x21
 #define REG_VID_CHA_VERTICAL_DISPLAY_SIZE_LOW	0x24
@@ -109,26 +118,48 @@
 #define REG_VID_CHA_VERTICAL_BACK_PORCH		0x36
 #define REG_VID_CHA_HORIZONTAL_FRONT_PORCH	0x38
 #define REG_VID_CHA_VERTICAL_FRONT_PORCH	0x3a
-#define REG_VID_CHA_TEST_PATTERN		0x3c
+/* Video registers channel B*/
+#define REG_VID_CHB_ACTIVE_LINE_LENGTH_LOW	0x22
+#define REG_VID_CHB_ACTIVE_LINE_LENGTH_HIGH	0x23
+#define REG_VID_CHB_VERTICAL_DISPLAY_SIZE_LOW	0x26
+#define REG_VID_CHB_VERTICAL_DISPLAY_SIZE_HIGH	0x27
+#define REG_VID_CHB_SYNC_DELAY_LOW		0x2a
+#define REG_VID_CHB_SYNC_DELAY_HIGH		0x2b
+#define REG_VID_CHB_HSYNC_PULSE_WIDTH_LOW	0x2e
+#define REG_VID_CHB_HSYNC_PULSE_WIDTH_HIGH	0x2f
+#define REG_VID_CHB_VSYNC_PULSE_WIDTH_LOW	0x32
+#define REG_VID_CHB_VSYNC_PULSE_WIDTH_HIGH	0x33
+#define REG_VID_CHB_HORIZONTAL_BACK_PORCH	0x35
+#define REG_VID_CHB_VERTICAL_BACK_PORCH		0x37
+#define REG_VID_CHB_HORIZONTAL_FRONT_PORCH	0x39
+#define REG_VID_CHB_VERTICAL_FRONT_PORCH	0x3b
+/* Test pattern register */
+#define REG_VID_TEST_PATTERN		0x3c
+#define  REG_VID_CHA_TEST_PATTERN			BIT(4)
+#define  REG_VID_CHB_TEST_PATTERN			BIT(0)
 /* IRQ registers */
 #define REG_IRQ_GLOBAL				0xe0
 #define  REG_IRQ_GLOBAL_IRQ_EN			BIT(0)
-#define REG_IRQ_EN				0xe1
-#define  REG_IRQ_EN_CHA_SYNCH_ERR_EN		BIT(7)
-#define  REG_IRQ_EN_CHA_CRC_ERR_EN		BIT(6)
-#define  REG_IRQ_EN_CHA_UNC_ECC_ERR_EN		BIT(5)
-#define  REG_IRQ_EN_CHA_COR_ECC_ERR_EN		BIT(4)
-#define  REG_IRQ_EN_CHA_LLP_ERR_EN		BIT(3)
-#define  REG_IRQ_EN_CHA_SOT_BIT_ERR_EN		BIT(2)
-#define  REG_IRQ_EN_CHA_PLL_UNLOCK_EN		BIT(0)
-#define REG_IRQ_STAT				0xe5
-#define  REG_IRQ_STAT_CHA_SYNCH_ERR		BIT(7)
-#define  REG_IRQ_STAT_CHA_CRC_ERR		BIT(6)
-#define  REG_IRQ_STAT_CHA_UNC_ECC_ERR		BIT(5)
-#define  REG_IRQ_STAT_CHA_COR_ECC_ERR		BIT(4)
-#define  REG_IRQ_STAT_CHA_LLP_ERR		BIT(3)
-#define  REG_IRQ_STAT_CHA_SOT_BIT_ERR		BIT(2)
-#define  REG_IRQ_STAT_CHA_PLL_UNLOCK		BIT(0)
+
+#define REG_IRQ_ENA				0xe1
+#define REG_IRQ_ENB				0xe2
+#define  REG_IRQ_ENx_CH_SYNCH_ERR_EN		BIT(7)
+#define  REG_IRQ_ENx_CH_CRC_ERR_EN		BIT(6)
+#define  REG_IRQ_ENx_CH_UNC_ECC_ERR_EN		BIT(5)
+#define  REG_IRQ_ENx_CH_COR_ECC_ERR_EN		BIT(4)
+#define  REG_IRQ_ENx_CH_LLP_ERR_EN		BIT(3)
+#define  REG_IRQ_ENx_CH_SOT_BIT_ERR_EN		BIT(2)
+#define  REG_IRQ_ENA_CH_PLL_UNLOCK_EN		BIT(0)
+
+#define REG_IRQ_STATA				0xe5
+#define REG_IRQ_STATB				0xe6
+#define  REG_IRQ_STATx_CH_SYNCH_ERR		BIT(7)
+#define  REG_IRQ_STATx_CH_CRC_ERR			BIT(6)
+#define  REG_IRQ_STATx_CH_UNC_ECC_ERR		BIT(5)
+#define  REG_IRQ_STATx_CH_COR_ECC_ERR		BIT(4)
+#define  REG_IRQ_STATx_CH_LLP_ERR			BIT(3)
+#define  REG_IRQ_STATx_CH_SOT_BIT_ERR		BIT(2)
+#define  REG_IRQ_STATx_CH_PLL_UNLOCK		BIT(0)
 
 enum sn65dsi83_model {
 	MODEL_SN65DSI83,
@@ -139,6 +170,7 @@ enum sn65dsi83_model {
 struct sn65dsi83;
 
 struct sn65dsi83_output {
+	bool				enabled;
 	struct sn65dsi83		*parent;
 	struct drm_bridge		bridge;
 	struct drm_display_mode		mode;
@@ -158,35 +190,19 @@ struct sn65dsi83 {
 	struct gpio_desc		*enable_gpio;
 	bool				lvds_dual_link;
 	bool				lvds_dual_link_even_odd_swap;
+	bool				enabled;
 };
 
 static const struct regmap_range sn65dsi83_readable_ranges[] = {
 	regmap_reg_range(REG_ID(0), REG_ID(8)),
 	regmap_reg_range(REG_RC_LVDS_PLL, REG_RC_DSI_CLK),
 	regmap_reg_range(REG_RC_PLL_EN, REG_RC_PLL_EN),
-	regmap_reg_range(REG_DSI_LANE, REG_DSI_CLK),
+	regmap_reg_range(REG_DSI_LANE, REG_DSI_CHB_CLK),
 	regmap_reg_range(REG_LVDS_FMT, REG_LVDS_CM),
 	regmap_reg_range(REG_VID_CHA_ACTIVE_LINE_LENGTH_LOW,
-			 REG_VID_CHA_ACTIVE_LINE_LENGTH_HIGH),
-	regmap_reg_range(REG_VID_CHA_VERTICAL_DISPLAY_SIZE_LOW,
-			 REG_VID_CHA_VERTICAL_DISPLAY_SIZE_HIGH),
-	regmap_reg_range(REG_VID_CHA_SYNC_DELAY_LOW,
-			 REG_VID_CHA_SYNC_DELAY_HIGH),
-	regmap_reg_range(REG_VID_CHA_HSYNC_PULSE_WIDTH_LOW,
-			 REG_VID_CHA_HSYNC_PULSE_WIDTH_HIGH),
-	regmap_reg_range(REG_VID_CHA_VSYNC_PULSE_WIDTH_LOW,
-			 REG_VID_CHA_VSYNC_PULSE_WIDTH_HIGH),
-	regmap_reg_range(REG_VID_CHA_HORIZONTAL_BACK_PORCH,
-			 REG_VID_CHA_HORIZONTAL_BACK_PORCH),
-	regmap_reg_range(REG_VID_CHA_VERTICAL_BACK_PORCH,
-			 REG_VID_CHA_VERTICAL_BACK_PORCH),
-	regmap_reg_range(REG_VID_CHA_HORIZONTAL_FRONT_PORCH,
-			 REG_VID_CHA_HORIZONTAL_FRONT_PORCH),
-	regmap_reg_range(REG_VID_CHA_VERTICAL_FRONT_PORCH,
-			 REG_VID_CHA_VERTICAL_FRONT_PORCH),
-	regmap_reg_range(REG_VID_CHA_TEST_PATTERN, REG_VID_CHA_TEST_PATTERN),
-	regmap_reg_range(REG_IRQ_GLOBAL, REG_IRQ_EN),
-	regmap_reg_range(REG_IRQ_STAT, REG_IRQ_STAT),
+			 REG_VID_CHA_TEST_PATTERN),
+	regmap_reg_range(REG_IRQ_GLOBAL, REG_IRQ_ENB),
+	regmap_reg_range(REG_IRQ_STATA, REG_IRQ_STATB),
 };
 
 static const struct regmap_access_table sn65dsi83_readable_table = {
@@ -197,29 +213,12 @@ static const struct regmap_access_table sn65dsi83_readable_table = {
 static const struct regmap_range sn65dsi83_writeable_ranges[] = {
 	regmap_reg_range(REG_RC_RESET, REG_RC_DSI_CLK),
 	regmap_reg_range(REG_RC_PLL_EN, REG_RC_PLL_EN),
-	regmap_reg_range(REG_DSI_LANE, REG_DSI_CLK),
+	regmap_reg_range(REG_DSI_LANE, REG_DSI_CHB_CLK),
 	regmap_reg_range(REG_LVDS_FMT, REG_LVDS_CM),
 	regmap_reg_range(REG_VID_CHA_ACTIVE_LINE_LENGTH_LOW,
-			 REG_VID_CHA_ACTIVE_LINE_LENGTH_HIGH),
-	regmap_reg_range(REG_VID_CHA_VERTICAL_DISPLAY_SIZE_LOW,
-			 REG_VID_CHA_VERTICAL_DISPLAY_SIZE_HIGH),
-	regmap_reg_range(REG_VID_CHA_SYNC_DELAY_LOW,
-			 REG_VID_CHA_SYNC_DELAY_HIGH),
-	regmap_reg_range(REG_VID_CHA_HSYNC_PULSE_WIDTH_LOW,
-			 REG_VID_CHA_HSYNC_PULSE_WIDTH_HIGH),
-	regmap_reg_range(REG_VID_CHA_VSYNC_PULSE_WIDTH_LOW,
-			 REG_VID_CHA_VSYNC_PULSE_WIDTH_HIGH),
-	regmap_reg_range(REG_VID_CHA_HORIZONTAL_BACK_PORCH,
-			 REG_VID_CHA_HORIZONTAL_BACK_PORCH),
-	regmap_reg_range(REG_VID_CHA_VERTICAL_BACK_PORCH,
-			 REG_VID_CHA_VERTICAL_BACK_PORCH),
-	regmap_reg_range(REG_VID_CHA_HORIZONTAL_FRONT_PORCH,
-			 REG_VID_CHA_HORIZONTAL_FRONT_PORCH),
-	regmap_reg_range(REG_VID_CHA_VERTICAL_FRONT_PORCH,
-			 REG_VID_CHA_VERTICAL_FRONT_PORCH),
-	regmap_reg_range(REG_VID_CHA_TEST_PATTERN, REG_VID_CHA_TEST_PATTERN),
-	regmap_reg_range(REG_IRQ_GLOBAL, REG_IRQ_EN),
-	regmap_reg_range(REG_IRQ_STAT, REG_IRQ_STAT),
+			 REG_VID_TEST_PATTERN),
+	regmap_reg_range(REG_IRQ_GLOBAL, REG_IRQ_ENB),
+	regmap_reg_range(REG_IRQ_STATA, REG_IRQ_STATB),
 };
 
 static const struct regmap_access_table sn65dsi83_writeable_table = {
@@ -230,7 +229,7 @@ static const struct regmap_access_table sn65dsi83_writeable_table = {
 static const struct regmap_range sn65dsi83_volatile_ranges[] = {
 	regmap_reg_range(REG_RC_RESET, REG_RC_RESET),
 	regmap_reg_range(REG_RC_LVDS_PLL, REG_RC_LVDS_PLL),
-	regmap_reg_range(REG_IRQ_STAT, REG_IRQ_STAT),
+	regmap_reg_range(REG_IRQ_STATA, REG_IRQ_STATB),
 };
 
 static const struct regmap_access_table sn65dsi83_volatile_table = {
@@ -245,7 +244,7 @@ static const struct regmap_config sn65dsi83_regmap_config = {
 	.wr_table = &sn65dsi83_writeable_table,
 	.volatile_table = &sn65dsi83_volatile_table,
 	.cache_type = REGCACHE_RBTREE,
-	.max_register = REG_IRQ_STAT,
+	.max_register = REG_IRQ_STATB,
 };
 
 static struct sn65dsi83_output *
@@ -289,7 +288,6 @@ static int sn65dsi83_attach(struct drm_bridge *bridge,
 	}
 
 	op->dsi = dsi;
-
 	dsi->lanes = op->dsi_lanes;
 	dsi->format = MIPI_DSI_FMT_RGB888;
 	dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_BURST;
@@ -401,7 +399,8 @@ static void sn65dsi83_atomic_enable(struct drm_bridge *bridge,
 	bool lvds_format_jeida;
 	unsigned int pval;
 	__le16 le16val;
-	u16 val;
+	bool channel_b = (op == &ctx->output[1]);
+	unsigned int val;
 	int ret;
 
 	/* Get the LVDS format from the bridge state. */
@@ -444,50 +443,90 @@ static void sn65dsi83_atomic_enable(struct drm_bridge *bridge,
 	crtc_state = drm_atomic_get_new_crtc_state(state, crtc);
 	mode = &crtc_state->adjusted_mode;
 
-	/* Clear reset, disable PLL */
-	regmap_write(ctx->regmap, REG_RC_RESET, 0x00);
-	regmap_write(ctx->regmap, REG_RC_PLL_EN, 0x00);
+	op->enabled = true;
 
-	/* Reference clock derived from DSI link clock. */
-	regmap_write(ctx->regmap, REG_RC_LVDS_PLL,
-		     REG_RC_LVDS_PLL_LVDS_CLK_RANGE(sn65dsi83_get_lvds_range(op, mode)) |
-		     REG_RC_LVDS_PLL_HS_CLK_SRC_DPHY);
-	regmap_write(ctx->regmap, REG_DSI_CLK,
-		     REG_DSI_CLK_CHA_DSI_CLK_RANGE(sn65dsi83_get_dsi_range(op, mode)));
-	regmap_write(ctx->regmap, REG_RC_DSI_CLK,
-		     REG_RC_DSI_CLK_DSI_CLK_DIVIDER(sn65dsi83_get_dsi_div(op)));
+	if (!ctx->enabled) {
+		/* Clear reset, disable PLL */
+		regmap_write(ctx->regmap, REG_RC_RESET, 0x00);
+		regmap_write(ctx->regmap, REG_RC_PLL_EN, 0x00);
 
-	/* Set number of DSI lanes and LVDS link config. */
-	regmap_write(ctx->regmap, REG_DSI_LANE,
-		     REG_DSI_LANE_DSI_CHANNEL_MODE_SINGLE |
-		     REG_DSI_LANE_CHA_DSI_LANES(~(op->dsi_lanes - 1)) |
-		     /* CHB is DSI85-only, set to default on DSI83/DSI84 */
-		     REG_DSI_LANE_CHB_DSI_LANES(3));
-	/* No equalization. */
-	regmap_write(ctx->regmap, REG_DSI_EQ, 0x00);
+		/* Reference clock derived from DSI link clock on channel A. */
+		regmap_write(ctx->regmap, REG_RC_LVDS_PLL,
+			     REG_RC_LVDS_PLL_LVDS_CLK_RANGE(sn65dsi83_get_lvds_range(op, mode)) |
+			     REG_RC_LVDS_PLL_HS_CLK_SRC_DPHY);
+		/* Pixel clock has to be common between both channels, so use
+		 * the provided mode for both channels
+		 */
+		regmap_write(ctx->regmap, REG_DSI_CHA_CLK,
+			     REG_DSI_CLK_CHx_DSI_CLK_RANGE(
+				sn65dsi83_get_dsi_range(&ctx->output[0], mode)));
+		regmap_write(ctx->regmap, REG_DSI_CHB_CLK,
+			     REG_DSI_CLK_CHx_DSI_CLK_RANGE(
+				sn65dsi83_get_dsi_range(&ctx->output[1], mode)));
+		regmap_write(ctx->regmap, REG_RC_DSI_CLK,
+			     REG_RC_DSI_CLK_DSI_CLK_DIVIDER(
+				sn65dsi83_get_dsi_div(&ctx->output[0])));
+
+		/* Set number of DSI lanes and LVDS link config. */
+		regmap_write(ctx->regmap, REG_DSI_LANE,
+			     (ctx->output[1].parent ?
+				REG_DSI_LANE_DSI_CHANNEL_MODE_2SINGLE :
+				REG_DSI_LANE_DSI_CHANNEL_MODE_SINGLE) |
+			     REG_DSI_LANE_CHA_DSI_LANES(~(ctx->output[0].dsi_lanes - 1)) |
+			     /* CHB is DSI85-only, set to default on DSI83/DSI84 */
+			     REG_DSI_LANE_CHB_DSI_LANES(ctx->output[1].parent ?
+				     (~(ctx->output[1].dsi_lanes - 1)) : 3)
+			    );
+		/* No equalization. */
+		regmap_write(ctx->regmap, REG_DSI_EQ, 0x00);
+
+		ctx->enabled = true;
+	}
+
+	/* Read/modify/write to maintain both channel configurations */
+	regmap_read(ctx->regmap, REG_LVDS_FMT, &val);
+	val &= ~(REG_LVDS_FMT_DE_NEG_POLARITY |
+		 REG_LVDS_FMT_HS_NEG_POLARITY |
+		 REG_LVDS_FMT_VS_NEG_POLARITY |
+		 REG_LVDS_FMT_LVDS_LINK_CFG);
+	if (!channel_b)
+		val &= ~(REG_LVDS_FMT_CHA_24BPP_MODE |
+			 REG_LVDS_FMT_CHA_24BPP_FORMAT1);
+	else
+		val &= ~(REG_LVDS_FMT_CHB_24BPP_MODE |
+			 REG_LVDS_FMT_CHB_24BPP_FORMAT1);
 
 	/* Set up sync signal polarity. */
-	val = (mode->flags & DRM_MODE_FLAG_NHSYNC ?
+	/* This appears to be common to both channels */
+	val |= (mode->flags & DRM_MODE_FLAG_NHSYNC ?
 	       REG_LVDS_FMT_HS_NEG_POLARITY : 0) |
 	      (mode->flags & DRM_MODE_FLAG_NVSYNC ?
 	       REG_LVDS_FMT_VS_NEG_POLARITY : 0);
 
 	/* Set up bits-per-pixel, 18bpp or 24bpp. */
 	if (lvds_format_24bpp) {
-		val |= REG_LVDS_FMT_CHA_24BPP_MODE;
-		if (ctx->lvds_dual_link)
+		if (!channel_b) {
+			val |= REG_LVDS_FMT_CHA_24BPP_MODE;
+			if (ctx->lvds_dual_link)
+				val |= REG_LVDS_FMT_CHB_24BPP_MODE;
+		} else {
 			val |= REG_LVDS_FMT_CHB_24BPP_MODE;
+		}
 	}
 
 	/* Set up LVDS format, JEIDA/Format 1 or SPWG/Format 2 */
 	if (lvds_format_jeida) {
-		val |= REG_LVDS_FMT_CHA_24BPP_FORMAT1;
-		if (ctx->lvds_dual_link)
+		if (!channel_b) {
+			val |= REG_LVDS_FMT_CHA_24BPP_FORMAT1;
+			if (ctx->lvds_dual_link)
+				val |= REG_LVDS_FMT_CHB_24BPP_FORMAT1;
+		} else {
 			val |= REG_LVDS_FMT_CHB_24BPP_FORMAT1;
+		}
 	}
 
 	/* Set up LVDS output config (DSI84,DSI85) */
-	if (!ctx->lvds_dual_link)
+	if (!ctx->lvds_dual_link && !ctx->output[1].parent)
 		val |= REG_LVDS_FMT_LVDS_LINK_CFG;
 
 	regmap_write(ctx->regmap, REG_LVDS_FMT, val);
@@ -499,30 +538,61 @@ static void sn65dsi83_atomic_enable(struct drm_bridge *bridge,
 		     REG_LVDS_LANE_CHB_LVDS_TERM);
 	regmap_write(ctx->regmap, REG_LVDS_CM, 0x00);
 
-	le16val = cpu_to_le16(mode->hdisplay);
-	regmap_bulk_write(ctx->regmap, REG_VID_CHA_ACTIVE_LINE_LENGTH_LOW,
-			  &le16val, 2);
-	le16val = cpu_to_le16(mode->vdisplay);
-	regmap_bulk_write(ctx->regmap, REG_VID_CHA_VERTICAL_DISPLAY_SIZE_LOW,
-			  &le16val, 2);
-	/* 32 + 1 pixel clock to ensure proper operation */
-	le16val = cpu_to_le16(32 + 1);
-	regmap_bulk_write(ctx->regmap, REG_VID_CHA_SYNC_DELAY_LOW, &le16val, 2);
-	le16val = cpu_to_le16(mode->hsync_end - mode->hsync_start);
-	regmap_bulk_write(ctx->regmap, REG_VID_CHA_HSYNC_PULSE_WIDTH_LOW,
-			  &le16val, 2);
-	le16val = cpu_to_le16(mode->vsync_end - mode->vsync_start);
-	regmap_bulk_write(ctx->regmap, REG_VID_CHA_VSYNC_PULSE_WIDTH_LOW,
-			  &le16val, 2);
-	regmap_write(ctx->regmap, REG_VID_CHA_HORIZONTAL_BACK_PORCH,
-		     mode->htotal - mode->hsync_end);
-	regmap_write(ctx->regmap, REG_VID_CHA_VERTICAL_BACK_PORCH,
-		     mode->vtotal - mode->vsync_end);
-	regmap_write(ctx->regmap, REG_VID_CHA_HORIZONTAL_FRONT_PORCH,
-		     mode->hsync_start - mode->hdisplay);
-	regmap_write(ctx->regmap, REG_VID_CHA_VERTICAL_FRONT_PORCH,
-		     mode->vsync_start - mode->vdisplay);
-	regmap_write(ctx->regmap, REG_VID_CHA_TEST_PATTERN, 0x00);
+	if (!channel_b) {
+		le16val = cpu_to_le16(mode->hdisplay);
+		regmap_bulk_write(ctx->regmap, REG_VID_CHA_ACTIVE_LINE_LENGTH_LOW,
+				  &le16val, 2);
+		le16val = cpu_to_le16(mode->vdisplay);
+		regmap_bulk_write(ctx->regmap, REG_VID_CHA_VERTICAL_DISPLAY_SIZE_LOW,
+				  &le16val, 2);
+		/* 32 + 1 pixel clock to ensure proper operation */
+		le16val = cpu_to_le16(32 + 1);
+		regmap_bulk_write(ctx->regmap, REG_VID_CHA_SYNC_DELAY_LOW, &le16val, 2);
+		le16val = cpu_to_le16(mode->hsync_end - mode->hsync_start);
+		regmap_bulk_write(ctx->regmap, REG_VID_CHA_HSYNC_PULSE_WIDTH_LOW,
+				  &le16val, 2);
+		le16val = cpu_to_le16(mode->vsync_end - mode->vsync_start);
+		regmap_bulk_write(ctx->regmap, REG_VID_CHA_VSYNC_PULSE_WIDTH_LOW,
+				  &le16val, 2);
+		regmap_write(ctx->regmap, REG_VID_CHA_HORIZONTAL_BACK_PORCH,
+			     mode->htotal - mode->hsync_end);
+		regmap_write(ctx->regmap, REG_VID_CHA_VERTICAL_BACK_PORCH,
+			     mode->vtotal - mode->vsync_end);
+		regmap_write(ctx->regmap, REG_VID_CHA_HORIZONTAL_FRONT_PORCH,
+			     mode->hsync_start - mode->hdisplay);
+		regmap_write(ctx->regmap, REG_VID_CHA_VERTICAL_FRONT_PORCH,
+			     mode->vsync_start - mode->vdisplay);
+		regmap_read(ctx->regmap, REG_VID_TEST_PATTERN, &val);
+		val &= ~REG_VID_CHA_TEST_PATTERN;
+		regmap_write(ctx->regmap, REG_VID_TEST_PATTERN, val);
+	} else {
+		le16val = cpu_to_le16(mode->hdisplay);
+		regmap_bulk_write(ctx->regmap, REG_VID_CHB_ACTIVE_LINE_LENGTH_LOW,
+				  &le16val, 2);
+		le16val = cpu_to_le16(mode->vdisplay);
+		regmap_bulk_write(ctx->regmap, REG_VID_CHB_VERTICAL_DISPLAY_SIZE_LOW,
+				  &le16val, 2);
+		/* 32 + 1 pixel clock to ensure proper operation */
+		le16val = cpu_to_le16(32 + 1);
+		regmap_bulk_write(ctx->regmap, REG_VID_CHB_SYNC_DELAY_LOW, &le16val, 2);
+		le16val = cpu_to_le16(mode->hsync_end - mode->hsync_start);
+		regmap_bulk_write(ctx->regmap, REG_VID_CHB_HSYNC_PULSE_WIDTH_LOW,
+				  &le16val, 2);
+		le16val = cpu_to_le16(mode->vsync_end - mode->vsync_start);
+		regmap_bulk_write(ctx->regmap, REG_VID_CHB_VSYNC_PULSE_WIDTH_LOW,
+				  &le16val, 2);
+		regmap_write(ctx->regmap, REG_VID_CHB_HORIZONTAL_BACK_PORCH,
+			     mode->htotal - mode->hsync_end);
+		regmap_write(ctx->regmap, REG_VID_CHB_VERTICAL_BACK_PORCH,
+			     mode->vtotal - mode->vsync_end);
+		regmap_write(ctx->regmap, REG_VID_CHB_HORIZONTAL_FRONT_PORCH,
+			     mode->hsync_start - mode->hdisplay);
+		regmap_write(ctx->regmap, REG_VID_CHB_VERTICAL_FRONT_PORCH,
+			     mode->vsync_start - mode->vdisplay);
+		regmap_read(ctx->regmap, REG_VID_TEST_PATTERN, &val);
+		val &= ~REG_VID_CHB_TEST_PATTERN;
+		regmap_write(ctx->regmap, REG_VID_TEST_PATTERN, val);
+	}
 
 	/* Enable PLL */
 	regmap_write(ctx->regmap, REG_RC_PLL_EN, REG_RC_PLL_EN_PLL_EN);
@@ -541,8 +611,10 @@ static void sn65dsi83_atomic_enable(struct drm_bridge *bridge,
 	regmap_write(ctx->regmap, REG_RC_RESET, REG_RC_RESET_SOFT_RESET);
 
 	/* Clear all errors that got asserted during initialization. */
-	regmap_read(ctx->regmap, REG_IRQ_STAT, &pval);
-	regmap_write(ctx->regmap, REG_IRQ_STAT, pval);
+	regmap_read(ctx->regmap, REG_IRQ_STATA, &pval);
+	regmap_write(ctx->regmap, REG_IRQ_STATA, pval);
+	regmap_read(ctx->regmap, REG_IRQ_STATB, &pval);
+	regmap_write(ctx->regmap, REG_IRQ_STATB, pval);
 }
 
 static void sn65dsi83_atomic_disable(struct drm_bridge *bridge,
@@ -551,9 +623,16 @@ static void sn65dsi83_atomic_disable(struct drm_bridge *bridge,
 	struct sn65dsi83_output *op = bridge_to_sn65dsi83_output(bridge);
 	struct sn65dsi83 *ctx = sn65dsi83_output_to_sn65dsi83(op);
 
-	/* Clear reset, disable PLL */
-	regmap_write(ctx->regmap, REG_RC_RESET, 0x00);
-	regmap_write(ctx->regmap, REG_RC_PLL_EN, 0x00);
+	op->enabled = false;
+
+	if (ctx->enabled &&
+	    !ctx->output[0].enabled &&
+	    !ctx->output[1].enabled) {
+		/* Clear reset, disable PLL */
+		regmap_write(ctx->regmap, REG_RC_RESET, 0x00);
+		regmap_write(ctx->regmap, REG_RC_PLL_EN, 0x00);
+		ctx->enabled = false;
+	}
 }
 
 static void sn65dsi83_atomic_post_disable(struct drm_bridge *bridge,
@@ -562,8 +641,9 @@ static void sn65dsi83_atomic_post_disable(struct drm_bridge *bridge,
 	struct sn65dsi83_output *op = bridge_to_sn65dsi83_output(bridge);
 	struct sn65dsi83 *ctx = sn65dsi83_output_to_sn65dsi83(op);
 
-	/* Put the chip in reset, pull EN line low. */
-	gpiod_set_value(ctx->enable_gpio, 0);
+	if (!ctx->enabled)
+		/* Put the chip in reset, pull EN line low. */
+		gpiod_set_value(ctx->enable_gpio, 0);
 }
 
 static enum drm_mode_status
