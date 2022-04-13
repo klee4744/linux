@@ -376,7 +376,8 @@ static int ti_sn_bridge_attach(struct drm_bridge *bridge,
 	}
 
 	/* TODO: setting to 4 MIPI lanes always for now */
-	dsi->lanes = 4;
+	//dsi->lanes = 4;
+	dsi->lanes = 3; //set the number of dsi lane to 3
 	dsi->format = MIPI_DSI_FMT_RGB888;
 	dsi->mode_flags = MIPI_DSI_MODE_VIDEO;
 
