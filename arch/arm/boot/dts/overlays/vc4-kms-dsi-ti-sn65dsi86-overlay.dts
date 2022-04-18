@@ -8,45 +8,48 @@
 
 / {
 	compatible = "brcm,bcm2835";
-
-	/* PWM0 function */
 	fragment@0 {
-		target = <&gpio>;
+		target-path = "/";
 		__overlay__ {
-			pwm_pins: pwm_pins {
-				brcm,pins = <18>;
-				brcm,function = <2>; /* Alt5 */
+			regulators {
+				compatible = "simple-bus";
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				reg_1v8: reg_1v8 {
+					compatible = "regulator-fixed";
+					regulator-name = "1V8";
+					regulator-min-microvolt = <1800000>;
+					regulator-max-microvolt = <1800000>;
+					regulator-always-on;
+				};
+
+				reg_1v2: reg_1v2 {
+					compatible = "regulator-fixed";
+					regulator-name = "1V2";
+					regulator-min-microvolt = <1200000>;
+					regulator-max-microvolt = <1200000>;
+					regulator-always-on;
+				};
+
+				sn65dsi86_refclk: sn65dsi86_refclk {
+					compatible = "fixed-clock";
+					#clock-cells = <0>;
+					clock-frequency = <27000000>;
+				};
 			};
 		};
 	};
 
 	fragment@1 {
-		target = <&pwm>;
-		frag1: __overlay__ {
-			pinctrl-names = "default";
-			pinctrl-0 = <&pwm_pins>;
-			assigned-clock-rates = <100000000>;
-			status = "okay";
-		};
-	};
-
-	fragment@2 {
 		target-path = "/";
 		__overlay__ {
 			//#gpio-cells = <2>;
-			/* Panel backlight through PWM0 on GPIO 18 */
-			backlight_edp: backlight {
-				compatible = "pwm-backlight";
-				pwms = <&pwm 0 5000000>; /* Period of 5000000ns means 200Hz */
-				brightness-levels = <0  1000>;
-				num-interpolated-steps = <1000>;
-				default-brightness-level = <800>;
-				enable-gpios = <&gpio 1 0>; /* Backlight enable... */
-			};
+			status = "okay";
 
 			panel: panel {
+				//compatible = "dell,p2414h", "simple-panel";
 				compatible = "orient,afv19201080a0", "simple-panel";
-				backlight = <&backlight_edp>;
 
 				port {
 					panel_in_edp: endpoint {
@@ -57,7 +60,7 @@
 		};
 	};
 
-	fragment@3 {
+	fragment@2 {
 		target = <&i2c_csi_dsi>;
 		__overlay__ {
 			#gpio-cells = <2>;
@@ -68,7 +71,16 @@
 			bridge@2c {
 				compatible = "ti,sn65dsi86";
 				reg = <0x2c>;
-				enable-gpios = <&gpio 0 0>;
+        
+				enable-gpios = <&gpio 4 0>;
+				
+				vccio-supply = <&reg_1v8>;
+				vcca-supply = <&reg_1v2>;
+				vpll-supply = <&reg_1v8>;
+				vcc-supply = <&reg_1v2>;
+				
+				clock-names = "refclk";
+				clocks = <&sn65dsi86_refclk>;
 
 				ports {
 					#address-cells = <1>;
@@ -78,13 +90,14 @@
 						reg = <0>;
 						bridge_in: endpoint {
 							remote-endpoint = <&dsi_out_port>;
-							data-lanes = <0 1 2 3>;
 						};
 					};
 
-					port@2 {
-						reg = <2>;
+					port@1 {
+						reg = <1>;
 						bridge_out: endpoint {
+							//data-lanes = <0 1 2 3>;
+							data-lanes = <0 1 2>;
 							remote-endpoint = <&panel_in_edp>;
 						};
 					};
@@ -93,7 +106,7 @@
 		};
 	};
 
-	fragment@4 {
+	fragment@5 {
 		target = <&dsi1>;
 		__overlay__ {
 			#address-cells = <1>;
@@ -102,20 +115,20 @@
 			port {
 				dsi_out_port: endpoint {
 					remote-endpoint = <&bridge_in>;
-					data-lanes = <0 1 2 3>;
+					data-lanes = <0 1 2>;
 				};
 			};
 		};
 	};
 
-	fragment@5 {
+	fragment@6 {
 		target = <&i2c0if>;
 		__overlay__ {
 			status = "okay";
 		};
 	};
-		
-	fragment@6 {
+
+	fragment@7 {
 		target = <&i2c0mux>;
 		__overlay__ {
 			status = "okay";
