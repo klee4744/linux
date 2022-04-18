@@ -72,7 +72,7 @@
 				compatible = "ti,sn65dsi86";
 				reg = <0x2c>;
         
-				enable-gpios = <&gpio 4 0>;
+				enable-gpios = <&gpio 17 0>;
 				
 				vccio-supply = <&reg_1v8>;
 				vcca-supply = <&reg_1v2>;
